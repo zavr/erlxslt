@@ -1,0 +1,13 @@
+{application, xslt, [
+    {description, "Erlang Xslt Transformer"},
+    {vsn, "0.0.1"},
+    {modules, [
+        xslt_port_util,
+        xslt
+    ]},
+    {registered, []},
+    {applications, [kernel, stdlib]}
+]}.
+
+
+
