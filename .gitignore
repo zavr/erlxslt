@@ -1,0 +1,9 @@
+*~
+*.beam
+*.bup
+*.log
+*.dump
+*.swp
+*.app
+*.so
+*.o
