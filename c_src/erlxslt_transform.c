@@ -44,6 +44,7 @@ void free(xdp_t doc) {
     \fn apply_xsl
 **/
 xdp_t apply_xsl(xsp_t xsl, xdp_t doc) {
+    debug("apply_xsl(xsp_t xsl, xdp_t doc)");
     return xsltApplyStylesheet(xsl, doc, NULL);
 }
 

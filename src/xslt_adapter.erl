@@ -1,7 +1,7 @@
 -module(xslt_adapter).
 -behaviour(gen_server).
 
--include("../include/common.hrl").
+-include("common.hrl").
 
 -define(VERSION_TOKEN,   "v").
 -define(APPLY_XSL_TOKEN, "a").

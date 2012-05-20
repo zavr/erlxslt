@@ -32,6 +32,13 @@
 
 #define ECODE 0
 
+#ifdef DEBUG
+    #define debug(buff) /*fprintf(stderr, "\n DEBUG: {%s} \n", buff)*/
+#endif
+#ifndef DEBUG
+    #define debug(buff) 0
+#endif
+
 typedef xsltStylesheetPtr xsp_t;
 typedef xmlDocPtr xdp_t;
 typedef xmlChar xc_t;
@@ -40,7 +47,6 @@ typedef struct {
    xc_t*    buff;
    int     size;
 } xstr_t;
-
 
 typedef std::map<std::string, xsp_t> template_map_t;
 typedef std::pair<std::string, xsp_t> template_pair_t;

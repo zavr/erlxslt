@@ -41,7 +41,7 @@
 
 -define(LIBXSLT_ROOT_PATH,
     filename:dirname(filename:dirname(code:which(?MODULE)))).
--define(LIBXSLT_ADAPTER_PATH, "priv/cbin/libxslt_adapter").
+-define(LIBXSLT_ADAPTER_PATH, "priv/cbin/erlxslt_adapter").
 -define(LIBXSLT_FULL_ADAPTER_PATH,
     string:join([?LIBXSLT_ROOT_PATH, ?LIBXSLT_ADAPTER_PATH], "/")).
 

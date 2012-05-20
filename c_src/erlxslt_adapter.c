@@ -8,6 +8,7 @@
 **/
 
 int main(int argc, char **argv, char **env) {
+    debug("int main(int argc, char **argv, char **env)");
     unsigned char buffer[PACKET_SIZE];
     #ifndef USE_GLOBAL
         template_map_t global_template_map;
@@ -50,8 +51,14 @@ int main(int argc, char **argv, char **env) {
     \fn apply_xsl
 **/
 void apply_xsl(template_map_t* global_template_map) {
-    xdp_t doc = get_doc();
+    debug("void apply_xsl(template_map_t* global_template_map)");
+    /**
+        Тут важно помнить в каком порядке
+        мы принимаем аргументы от адаптера
+        Сначала xsl потом doc
+    **/
     xsp_t xsl = get_xsl(global_template_map);
+    xdp_t doc = get_doc();
     apply(xsl, doc);
     free(doc);
 }
@@ -60,8 +67,9 @@ void apply_xsl(template_map_t* global_template_map) {
     \fn get_xsl
 **/
 xsp_t get_xsl(template_map_t* global_template_map){
+    debug("xsp_t get_xsl(template_map_t* global_template_map);");
     unsigned char *xslfile       = read_alloc_cmd(1);
-    xsp_t xsl = memo_xsl(global_template_map, xslfile, USE_MEMO);
+    xsp_t xsl = memo_xsl(global_template_map, xslfile, 0);
     return xsl;
 }
 
@@ -69,6 +77,7 @@ xsp_t get_xsl(template_map_t* global_template_map){
     \fn get_doc
 **/
 xdp_t  get_doc(void){
+    debug("xdp_t  get_doc(void);");
     char *input_xml_str = (char *)read_alloc_cmd(1);
     xdp_t doc = parse_xml(input_xml_str);
     return doc;
@@ -78,6 +87,7 @@ xdp_t  get_doc(void){
     \fn apply
 **/
 void apply(xsp_t xsl, xdp_t doc){
+    debug("void apply(xsp_t xsl, xdp_t doc)");
     xdp_t rxml = apply_xsl(xsl, doc);
     save(rxml, xsl);
     free(rxml);
@@ -87,6 +97,7 @@ void apply(xsp_t xsl, xdp_t doc){
     \fn memo_xsl
 **/
 xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile){
+    debug("xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile)");
     xsp_t xsl = NULL;
     if(global_template_map->
             find((const char*)xslfile) != global_template_map->end())
@@ -104,6 +115,7 @@ xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile){
     \fn memo_xsl
 **/
 xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile, int use_memo){
+    debug("xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile, int use_memo)");
     xsp_t xsl = NULL;
 
     /*!
@@ -121,6 +133,7 @@ xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile, int 
     \fn save
 **/
 void save(xdp_t rxml, xsp_t xsl){
+    debug("void save(xdp_t rxml, xsp_t xsl)");
     xstr_t result = save_to_string(rxml, xsl);
     write_int(ECODE);
     if (ECODE) {

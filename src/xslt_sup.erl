@@ -9,7 +9,7 @@
 %% supervisor callbacks
 -export([init/1]).
 
--include("../include/common.hrl").
+-include("common.hrl").
 
 %% @spec start_link() -> ServerRet
 %% @doc API for starting the supervisor.
