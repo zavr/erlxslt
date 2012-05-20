@@ -36,6 +36,10 @@ typedef xsltStylesheetPtr xsp_t;
 typedef xmlDocPtr xdp_t;
 typedef xmlChar xc_t;
 
+typedef struct {
+   xc_t*    buff;
+   int     size;
+} xstr_t;
 
 
 typedef std::map<std::string, xsp_t> template_map_t;
@@ -50,8 +54,12 @@ xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile, int 
 xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile);
 
 void save(xdp_t result, xsp_t xsl);
+xstr_t save_to_string(xdp_t result, xsp_t xsl);
+
+void free(xstr_t xstr);
 void free(xc_t *res_buff);
 void free(xdp_t doc);
+
 xdp_t apply_xsl(xsp_t xsl, xdp_t doc);
 xdp_t parse_xml(char *xml_str);
 xsp_t parse_xslt(const xc_t* xslfile);
