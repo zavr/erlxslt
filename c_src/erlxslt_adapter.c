@@ -1,5 +1,10 @@
 #include "erlxslt_adapter.h"
 
+
+#ifdef USE_GLOBAL
+    Trie* trie = NULL;
+#endif
+
 /**
     \fn main
         Основная рабочая функция драйвера.
@@ -11,34 +16,37 @@ int main(int argc, char **argv, char **env) {
     debug("int main(int argc, char **argv, char **env)");
     unsigned char buffer[PACKET_SIZE];
     #ifndef USE_GLOBAL
-        template_map_t global_template_map;
+        Trie* trie = NULL
     #endif
+    trie = trie_try_new(trie);
     for(;;) {
         /**
             Читаем сообщение из буфера,
             до тех пор пока можем их читать,
             и пока не получили неизвестную нам команду
         **/
-        if (1 != read_cmd(buffer))
+        if (1 != read_cmd(buffer)){
+            trie_free(trie);
             exit(1);
+        }
         switch (*buffer) {
             case CMD_VERSION:
                 /**
                     Запрос версии
                 **/
-                write_int(ECODE);
-                write_cmd((const unsigned char*)VERSION, strlen(VERSION));
+                cmd_version();
                 break;
             case CMD_APPLY_XSL:
                 /**
                     Запрос на преобразование 
                 **/
-                apply_xsl(&global_template_map);
+                cmd_apply_xsl(trie);
                 break;
             default:
                 /**
                     Неведомая фигня
                 **/
+                trie_free(trie);
                 fprintf(stderr, "unknown command %c in adapter\n",
                         *buffer);
                 exit(1);
@@ -46,76 +54,79 @@ int main(int argc, char **argv, char **env) {
     }
 }
 
+/**
+    \fn cmd_version
+**/
+
+inline void cmd_version(void){
+    write_ecode();
+    write_const_cmd(VERSION);
+}
+
 
 /**
-    \fn apply_xsl
+    \fn cmd_apply_xsl
 **/
-void apply_xsl(template_map_t* global_template_map) {
-    debug("void apply_xsl(template_map_t* global_template_map)");
+inline void cmd_apply_xsl(Trie* trie) {
+    debug("void apply_xsl(Trie* trie)");
     /**
         Тут важно помнить в каком порядке
         мы принимаем аргументы от адаптера
         Сначала xsl потом doc
     **/
-    xsp_t xsl = get_xsl(global_template_map);
+    xsp_t xsl = get_xsl(trie);
     xdp_t doc = get_doc();
     apply(xsl, doc);
-    free(doc);
+    free_xdp(doc);
 }
 
 /**
     \fn get_xsl
 **/
-xsp_t get_xsl(template_map_t* global_template_map){
-    debug("xsp_t get_xsl(template_map_t* global_template_map);");
+inline xsp_t get_xsl(Trie* trie){
     unsigned char *xslfile       = read_alloc_cmd(1);
-    xsp_t xsl = memo_xsl(global_template_map, xslfile, 0);
+    xsp_t xsl = try_memo_xsl(trie, xslfile, USE_MEMO);
     return xsl;
 }
 
 /**
     \fn get_doc
 **/
-xdp_t  get_doc(void){
-    debug("xdp_t  get_doc(void);");
-    char *input_xml_str = (char *)read_alloc_cmd(1);
-    xdp_t doc = parse_xml(input_xml_str);
+inline xdp_t  get_doc(void){
+    char * ixmlstr = (char *)read_alloc_cmd(1);
+    xdp_t doc = parse_xml(ixmlstr);
     return doc;
 }
 
 /**
     \fn apply
 **/
-void apply(xsp_t xsl, xdp_t doc){
+inline void apply(xsp_t xsl, xdp_t doc){
     debug("void apply(xsp_t xsl, xdp_t doc)");
-    xdp_t rxml = apply_xsl(xsl, doc);
+    xdp_t rxml = apply_ss(xsl, doc);
     save(rxml, xsl);
-    free(rxml);
+    free_xdp(rxml);
 }
 
 /**
     \fn memo_xsl
 **/
-xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile){
-    debug("xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile)");
-    xsp_t xsl = NULL;
-    if(global_template_map->
-            find((const char*)xslfile) != global_template_map->end())
-    {
-        xsl = global_template_map->find((const char*)xslfile)->second;
-    }
-    else
+inline xsp_t memo_xsl(Trie* trie, unsigned char *xslfile){
+    debug("xsp_t memo_xsl(Trie* trie, unsigned char *xslfile)");
+    xsp_t xsl = (xsp_t)trie_lookup(trie, (char*)xslfile);
+    if(NULL == xsl)
     {
         xsl = parse_xslt((const xc_t*) xslfile);
-        global_template_map->insert(template_pair_t((const char*)xslfile, xsl));
+        trie_insert(trie, (char*)xslfile, xsl);
     }
+
     return xsl;
 }
 /**
-    \fn memo_xsl
+    \fn try_memo_xsl
 **/
-xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile, int use_memo){
-    debug("xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile, int use_memo)");
+inline xsp_t try_memo_xsl(Trie* trie, unsigned char *xslfile, int use_memo){
+    debug("xsp_t memo_xsl(Trie* trie, unsigned char *xslfile, int use_memo)");
     xsp_t xsl = NULL;
 
     /*!
@@ -123,7 +134,7 @@ xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile, int 
         Но если нам нужно удобство разработки мы этого не делаем.
     */
     if(use_memo)
-        xsl = memo_xsl(global_template_map, xslfile);
+        xsl = memo_xsl(trie, xslfile);
     else
         xsl = parse_xslt((const xc_t*) xslfile);
     return xsl;
@@ -132,16 +143,15 @@ xsp_t memo_xsl(template_map_t* global_template_map, unsigned char *xslfile, int 
 /**
     \fn save
 **/
-void save(xdp_t rxml, xsp_t xsl){
+inline void save(xdp_t rxml, xsp_t xsl){
     debug("void save(xdp_t rxml, xsp_t xsl)");
     xstr_t result = save_to_string(rxml, xsl);
-    write_int(ECODE);
-    if (ECODE) {
+    if (write_ecode()) {
         fprintf(stderr, "unknown error\n");
-        write_cmd("ERROR!");
+        write_const_cmd("ERROR!");
     }
     else {
         write_cmd((const unsigned char*) result.buff, result.size);
     }
-    free(result);
+    free_xstr(result);
 }
