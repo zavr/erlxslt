@@ -2,12 +2,24 @@
     {description, "Erlang Xslt Transformer"},
     {vsn, "0.0.1"},
     {modules, [
+        xml,
+        xml_utils,
+        xml_xml,
+        xslt_adapter,
+        xslt_app,
+        xslt,
+        xslt_convert,
+        xslt,
         xslt_port_util,
-        xslt
+        xslt_sup
     ]},
     {registered, []},
-    {applications, [kernel, stdlib]}
+    {applications,[
+        kernel,
+        stdlib
+    ]},
+    {mod,{xslt_app,[]}},
+    {env,[]}
 ]}.
-
 
 
