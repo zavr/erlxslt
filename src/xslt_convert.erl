@@ -78,14 +78,35 @@ to_atom(Val) when erlang:is_binary(Val) ->
 
 % ---------------------------------------------------------------------------
 
-to_list(Val) when is_list(Val) -> Val;
-to_list(Val) when is_atom(Val) ->
+to_list(Val) ->
+    escape(
+    [
+        {"[&]","\\&amp;"},
+        {"[<]", "\\&lt;"},
+        {"[>]","\\&gt;"}
+    ],
+    to_list_(Val)).
+
+escape([], Value) ->  Value;
+escape([{Item, Re}|Tail], Value) ->
+    Result = re:replace(Value, Item, Re, [{return, list}]),
+    escape(Tail, Result).
+
+
+
+% escape([], Result) -> Result;
+% escape([Head|Tail], Value) ->
+%     Result = lists:delete(Head, Value),
+%     escape(Tail, Result).
+
+to_list_(Val) when is_list(Val) -> Val;
+to_list_(Val) when is_atom(Val) ->
     atom_to_list(Val);
-to_list(Val) when is_integer(Val) ->
+to_list_(Val) when is_integer(Val) ->
     integer_to_list(Val);
-to_list(Val) when is_float(Val) ->
+to_list_(Val) when is_float(Val) ->
     float_to_list(Val);
-to_list(Val) when is_binary(Val) ->
+to_list_(Val) when is_binary(Val) ->
     binary_to_list(Val).
 
 % ---------------------------------------------------------------------------
