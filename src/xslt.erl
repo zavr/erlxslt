@@ -31,7 +31,7 @@
          terminate/2, code_change/3]).
 
 start()->
-    start_link().
+    xslt_app:start().
 
 start_link()->
     start_link(?LIBXSLT_FULL_ADAPTER_PATH).
